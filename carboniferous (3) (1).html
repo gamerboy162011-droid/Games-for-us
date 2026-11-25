@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>CARBONIFEROUS // Floodplains & Forest</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;font-family:system-ui,sans-serif}
+body{overflow:hidden;background:#1a221d;color:#e6eee8;touch-action:none}
+canvas{display:block;width:100vw;height:100vh}
+#menu{position:fixed;inset:0;background:radial-gradient(circle,rgba(24,33,28,.9),rgba(10,15,12,.98));display:flex;align-items:center;justify-content:center;z-index:30;padding:16px}
+.panel{background:rgba(20,28,23,.96);border:1px solid #3c5243;border-radius:14px;padding:20px;width:390px;max-width:100%}
+h1{font-size:22px;letter-spacing:3px;color:#93d6a7;text-align:center}
+.sub{font-size:11px;color:#8fa696;text-align:center;margin-bottom:14px}
+.row{margin-bottom:10px}
+label{display:flex;justify-content:space-between;font-size:12px;color:#b2c7b8;margin-bottom:4px;font-weight:600}
+input[type=text]{width:100%;padding:9px;background:#0e1411;border:1px solid #3c5243;border-radius:8px;color:#fff;font-size:14px}
+input[type=range]{width:100%;height:26px;accent-color:#72c78c}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;text-transform:uppercase}
+.btn-p{background:#469e63;color:#07120a;margin-bottom:8px}
+.btn-s{background:#1f2e24;color:#a8ccb3;border:1px solid #3c5243}
+.jbox{display:flex;gap:8px;margin-top:8px}
+.jbox input{text-transform:uppercase;letter-spacing:2px;font-weight:700;text-align:center}
+.jbox button{width:48%}
+#status{font-size:12px;color:#f0b84d;text-align:center;margin-top:8px;min-height:16px}
+#hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:10}
+#xhair{position:absolute;top:50%;left:50%;width:6px;height:6px;border:2px solid rgba(255,255,255,.75);border-radius:50%;transform:translate(-50%,-50%)}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;font-size:11px;gap:6px}
+.badge{background:rgba(16,24,19,.82);border:1px solid #384f40;padding:5px 8px;border-radius:6px;pointer-events:auto}
+#stats{position:absolute;top:42px;left:10px;width:165px;background:rgba(16,24,19,.8);border:1px solid #384f40;padding:7px;border-radius:8px}
+.bwrap{margin-bottom:5px}.bwrap:last-child{margin-bottom:0}
+.blbl{font-size:10px;display:flex;justify-content:space-between;margin-bottom:2px;color:#a8c2b0}
+.bbg{height:5px;background:#090f0b;border-radius:3px;overflow:hidden}
+.bfill{height:100%}
+#hp-f{background:#d9534f;width:100%}
+#st-f{background:#5cc980;width:100%}
+#ns-f{background:#e09f3e;width:10%}
+#minimap{position:absolute;top:42px;right:10px;width:96px;height:96px;border-radius:50%;border:2px solid #486652;background:rgba(14,22,17,.85);pointer-events:auto;display:block}
+#toast{position:absolute;top:26%;left:50%;transform:translateX(-50%);background:rgba(16,28,20,.9);border:1px solid #5cc980;color:#b2f2c2;padding:5px 12px;border-radius:16px;font-size:12px;opacity:0;transition:opacity .2s}
+#joy-z{position:absolute;bottom:18px;left:18px;width:116px;height:116px;pointer-events:auto}
+#joy-b{width:100%;height:100%;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(147,214,167,.35);position:relative}
+#joy-s{width:46px;height:46px;border-radius:50%;background:rgba(147,214,167,.55);position:absolute;top:33px;left:33px}
+#look-z{position:absolute;top:145px;right:0;width:55%;height:55%;pointer-events:auto}
+#acts{position:absolute;bottom:18px;right:14px;display:grid;grid-template-columns:1fr 1fr;gap:9px;pointer-events:auto}
+.abtn{width:58px;height:58px;border-radius:50%;background:rgba(18,30,22,.85);border:2px solid #4e8c63;color:#d9f0e0;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.abtn:active{background:#469e63;color:#061209}
+#craft-m{position:fixed;inset:0;background:rgba(8,14,10,.88);z-index:25;display:none;align-items:center;justify-content:center;padding:16px}
+.cbox{background:#142119;border:1px solid #3c5c46;border-radius:12px;width:360px;max-width:100%;padding:16px}
+.ibar{display:flex;justify-content:space-around;background:#0c140f;padding:7px;border-radius:7px;margin-bottom:10px;font-size:11px}
+.rec{display:flex;justify-content:space-between;align-items:center;background:#1a2b20;padding:9px;border-radius:7px;margin-bottom:7px;border:1px solid #2d4736}
+.rec b{font-size:12px;color:#93d6a7;display:block}.rec span{font-size:10px;color:#9cb5a4}
+.cgo{padding:7px 11px;background:#469e63;color:#051209;border:none;border-radius:6px;font-weight:800;font-size:11px}
+.cgo:disabled{background:#213327;color:#556e5d}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+<div id="menu">
+  <div class="panel">
+    <h1>Carboniferous</h1>
+    <div class="sub">OPEN FLOODPLAINS // RIVER VALLEY // SCP-939</div>
+    <div class="row"><button id="b-qual" class="btn btn-s">Graphics Quality: HIGH</button></div>
+    <div class="row">
+      <label><span>Render Distance</span><span id="rd-t">8 (Bank)</span></label>
+      <input type="range" id="rd-s" min="2" max="16" value="8">
+    </div>
+    <div class="row">
+      <label><span>World Seed (Optional)</span></label>
+      <input type="text" id="seed-i" placeholder="Blank = Random Valley">
+    </div>
+    <button id="b-host" class="btn btn-p">Create Room / Play</button>
+    <div class="jbox">
+      <input type="text" id="j-code" maxlength="4" placeholder="CODE">
+      <button id="b-join" class="btn btn-s">Join Room</button>
+    </div>
+    <div id="status"></div>
+  </div>
+</div>
+
+<div id="hud">
+  <div id="xhair"></div>
+  <div id="top">
+    <div class="badge" id="r-disp">ROOM: SOLO</div>
+    <div class="badge" id="t-disp">HANDS</div>
+    <div class="badge" id="b-map">MAP: ON</div>
+    <div class="badge" id="b-menu">MENU</div>
+  </div>
+  <div id="stats">
+    <div class="bwrap"><div class="blbl"><span>HEALTH</span><span id="hp-t">100</span></div><div class="bbg"><div id="hp-f" class="bfill"></div></div></div>
+    <div class="bwrap"><div class="blbl"><span>STAMINA</span><span id="st-t">100%</span></div><div class="bbg"><div id="st-f" class="bfill"></div></div></div>
+    <div class="bwrap"><div class="blbl"><span>SOUND</span><span id="ns-t">LOW</span></div><div class="bbg"><div id="ns-f" class="bfill"></div></div></div>
+  </div>
+  <canvas id="minimap" width="96" height="96"></canvas>
+  <div id="toast"></div>
+  <div id="joy-z"><div id="joy-b"><div id="joy-s"></div></div></div>
+  <div id="look-z"></div>
+  <div id="acts">
+    <div class="abtn" id="b-craft">CRAFT</div>
+    <div class="abtn" id="b-crouch">CROUCH</div>
+    <div class="abtn" id="b-jump">JUMP</div>
+    <div class="abtn" id="b-swing">SWING</div>
+  </div>
+</div>
+
+<div id="craft-m">
+  <div class="cbox">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <b style="color:#93d6a7;font-size:13px">ARK CRAFTING</b>
+      <button id="b-ccraft" class="btn-s" style="padding:3px 9px;border-radius:5px;font-size:11px">X</button>
+    </div>
+    <div class="ibar" id="inv-b">Wood: 0 | Thatch: 0 | Fiber: 0</div>
+    <div id="rec-l"></div>
+  </div>
+</div>
+
+<script>
+// 1. FILTERED PROCEDURAL WEB AUDIO (REALISTIC FOLEY + 939)
+let actx = null, noiseBuf = null, windGain = null;
+function initAudio() {
+  if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  actx = new AC();
+  // Generate 2s of pink-ish noise for natural footsteps, wind & wood thuds
+  const len = actx.sampleRate * 2;
+  noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  let b0=0,b1=0,b2=0;
+  for (let i=0;i<len;i++) {
+    const w = Math.random()*2-1;
+    b0 = 0.997*b0 + w*0.029; b1 = 0.985*b1 + w*0.032; b2 = 0.950*b2 + w*0.048;
+    d[i] = (b0 + b1 + b2 + w*0.18) * 0.5;
+  }
+  // Subtle ambient valley breeze
+  const src = actx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+  const flt = actx.createBiquadFilter(); flt.type = 'bandpass'; flt.frequency.value = 320; flt.Q.value = 1.8;
+  windGain = actx.createGain(); windGain.gain.value = 0.035;
+  src.connect(flt); flt.connect(windGain); windGain.connect(actx.destination);
+  src.start();
+}
+
+function playStep(inWater, sprint) {
+  if (!actx || !noiseBuf) return;
+  const t = actx.currentTime;
+  const src = actx.createBufferSource(); src.buffer = noiseBuf;
+  const flt = actx.createBiquadFilter();
+  flt.type = inWater ? 'bandpass' : 'lowpass';
+  flt.frequency.setValueAtTime(inWater ? 950 : (sprint ? 520 : 340), t);
+  flt.frequency.exponentialRampToValueAtTime(inWater ? 280 : 95, t + 0.14);
+  const g = actx.createGain();
+  const vol = sprint ? 0.16 : 0.08;
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  src.connect(flt); flt.connect(g); g.connect(actx.destination);
+  src.start(t, Math.random()*1.5, 0.16);
+}
+
+function playChop(isTree) {
+  if (!actx || !noiseBuf) return;
+  const t = actx.currentTime;
+  // Wood thud body
+  const osc = actx.createOscillator(); osc.type = 'triangle';
+  osc.frequency.setValueAtTime(isTree ? 145 : 260, t);
+  osc.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+  const og = actx.createGain();
+  og.gain.setValueAtTime(0.24, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+  osc.connect(og); og.connect(actx.destination); osc.start(t); osc.stop(t + 0.14);
+  // Bark crunch noise
+  const src = actx.createBufferSource(); src.buffer = noiseBuf;
+  const flt = actx.createBiquadFilter(); flt.type = 'bandpass'; flt.frequency.value = isTree ? 800 : 1800;
+  const ng = actx.createGain(); ng.gain.setValueAtTime(0.18, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+  src.connect(flt); flt.connect(ng); ng.connect(actx.destination);
+  src.start(t, Math.random(), 0.12);
+}
+
+function playMimicSound(dist, mode) {
+  if (!actx || dist > 55) return;
+  const vol = Math.max(0.01, (1 - dist / 55) * 0.25);
+  const t = actx.currentTime;
+  if (mode === 'lure') {
+    // Mimics fake wood chop or heavy footstep in the distance
+    const osc = actx.createOscillator(); osc.type = 'triangle';
+    osc.frequency.setValueAtTime(135, t); osc.frequency.exponentialRampToValueAtTime(45, t + 0.14);
+    const g = actx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.connect(g); g.connect(actx.destination); osc.start(t); osc.stop(t + 0.16);
+  } else {
+    // Guttural SCP-939 throat rattle
+    const osc = actx.createOscillator(); osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(68, t); osc.frequency.linearRampToValueAtTime(44, t + 0.28);
+    const flt = actx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 260;
+    const g = actx.createGain(); g.gain.setValueAtTime(vol * 0.85, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    osc.connect(flt); flt.connect(g); g.connect(actx.destination); osc.start(t); osc.stop(t + 0.31);
+  }
+}
+
+// 2. SETTINGS & MENU
+const QUALS = [
+  {name:'LOW', dpr:0.75, segs:12, dens:0.6},
+  {name:'HIGH', dpr:1.0, segs:20, dens:1.0},
+  {name:'ULTRA', dpr:Math.min(window.devicePixelRatio||1,2), segs:28, dens:1.4}
+];
+let qIdx = 1, renderDist = 8, showMap = true;
+const CHUNK = 46;
+
+document.getElementById('b-qual').onclick = () => {
+  qIdx = (qIdx + 1) % QUALS.length;
+  document.getElementById('b-qual').textContent = 'Graphics Quality: ' + QUALS[qIdx].name;
+  if (renderer) { renderer.setPixelRatio(QUALS[qIdx].dpr); clearChunks(); }
+};
+const rdS = document.getElementById('rd-s'), rdT = document.getElementById('rd-t');
+rdS.oninput = () => {
+  renderDist = parseInt(rdS.value, 10);
+  rdT.textContent = renderDist + (renderDist >= 13 ? ' (MAX)' : renderDist >= 8 ? ' (Bank)' : '');
+  if (scene) { scene.fog.far = renderDist * CHUNK * 0.94; scene.fog.near = renderDist * CHUNK * 0.22; }
+};
+document.getElementById('b-map').onclick = () => {
+  showMap = !showMap;
+  document.getElementById('minimap').style.display = showMap ? 'block' : 'none';
+  document.getElementById('b-map').textContent = showMap ? 'MAP: ON' : 'MAP: OFF';
+};
+
+// 3. WIDE OPEN FLOODPLAINS + RIVERS + FOREST BIOMES
+let SEED = 315000;
+function hash(x, z) { const n = Math.sin(x*127.1 + z*311.7 + SEED*0.13)*43758.5453; return n - Math.floor(n); }
+function noise(x, z) {
+  const ix = Math.floor(x), iz = Math.floor(z), fx = x-ix, fz = z-iz;
+  const ux = fx*fx*(3-2*fx), uz = fz*fz*(3-2*fz);
+  return hash(ix,iz)*(1-ux)*(1-uz) + hash(ix+1,iz)*ux*(1-uz) + hash(ix,iz+1)*(1-ux)*uz + hash(ix+1,iz+1)*ux*uz;
+}
+
+// Forest density mask: creates huge open plains separating dense forest patches
+function getForestMask(x, z) {
+  const m = noise(x * 0.0055 + 4.1, z * 0.0055 - 2.7);
+  return m; // < 0.62 = open floodplain/grassland, > 0.62 = dense Carboniferous woods
+}
+
+// Winding rivers + flat floodplains + distant hills
+function getHeight(x, z) {
+  const riverPath = Math.sin(z * 0.009 + noise(z * 0.004, 1.5) * 3.2) * 55;
+  const distRiver = Math.abs(x - riverPath);
+  if (distRiver < 11) return -0.9 + (distRiver / 11) * 0.95; // Shallow winding river channel
+
+  const flatPlain = noise(x * 0.008, z * 0.008);
+  const detail = noise(x * 0.045, z * 0.045) * 0.45;
+  // Keep 75% of land very flat & open; only raise gentle ridges far out
+  const ridge = Math.max(0, flatPlain - 0.58) * 14.0;
+  return 0.15 + ridge + detail;
+}
+
+function makeBarkTex() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#2c3329'; ctx.fillRect(0,0,128,128);
+  for (let y=-1;y<=8;y++) for (let x=-1;x<=8;x++) {
+    const cx = (x+(y%2)*0.5)*16, cy = y*16;
+    ctx.beginPath(); ctx.moveTo(cx,cy-7); ctx.lineTo(cx+7,cy); ctx.lineTo(cx,cy+7); ctx.lineTo(cx-7,cy); ctx.closePath();
+    ctx.fillStyle = (x+y)%2===0 ? '#3b4536' : '#2f382b'; ctx.fill();
+    ctx.strokeStyle = '#181f16'; ctx.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2,10); return t;
+}
+
+// 4. THREE.JS SCENE, SOLID TREES & MINIMAP
+let scene, camera, renderer, water, handMesh, mimicMesh;
+const chunks = new Map(), colliders = [], nodes = [], walls = [];
+let gMat, tMat, cMat, rMat, fMat, bMat, tGeo, cGeo, rGeo, fGeo, bGeo;
+
+function init3D() {
+  if (typeof THREE === 'undefined') return false;
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x7c8a84); // Overcast misty sky
+  scene.fog = new THREE.Fog(0x7c8a84, renderDist * CHUNK * 0.22, renderDist * CHUNK * 0.94);
+
+  camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(QUALS[qIdx].dpr);
+  document.body.appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xc8d6cf, 0x2b3629, 0.95));
+  const sun = new THREE.DirectionalLight(0xe6ede8, 0.85);
+  sun.position.set(60, 120, 40); scene.add(sun);
+
+  handMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.5), new THREE.MeshStandardMaterial({color:0xc99467}));
+  handMesh.position.set(0.3,-0.26,-0.48); camera.add(handMesh); scene.add(camera);
+
+  const wGeo = new THREE.PlaneGeometry(2600, 2600); wGeo.rotateX(-Math.PI/2);
+  water = new THREE.Mesh(wGeo, new THREE.MeshStandardMaterial({color:0x2b3d38, roughness:0.18, metalness:0.65, transparent:true, opacity:0.86}));
+  scene.add(water);
+
+  const bark = makeBarkTex();
+  gMat = new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.94});
+  tMat = new THREE.MeshStandardMaterial({map:bark, bumpMap:bark, bumpScale:0.15, roughness:0.88});
+  cMat = new THREE.MeshStandardMaterial({color:0x2c472b, roughness:0.82});
+  rMat = new THREE.MeshStandardMaterial({color:0x4b6339, roughness:0.78});
+  fMat = new THREE.MeshStandardMaterial({color:0x365930, roughness:0.8, side:THREE.DoubleSide});
+  bMat = new THREE.MeshStandardMaterial({color:0x4e5752, roughness:0.92});
+
+  tGeo = new THREE.CylinderGeometry(0.42, 0.82, 22, 7); tGeo.translate(0, 11, 0);
+  cGeo = new THREE.DodecahedronGeometry(3.6, 1); cGeo.scale(1.15, 0.65, 1.15); cGeo.translate(0, 22, 0);
+  rGeo = new THREE.CylinderGeometry(0.1, 0.16, 4.5, 5); rGeo.translate(0, 2.25, 0);
+  fGeo = new THREE.ConeGeometry(1.4, 0.95, 5, 1, true); fGeo.translate(0, 0.45, 0);
+  bGeo = new THREE.DodecahedronGeometry(1.1, 0);
+
+  // SCP-939 Mire Mimic
+  mimicMesh = new THREE.Group();
+  const mBody = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.75, 2.1), new THREE.MeshStandardMaterial({color:0x6b2222, roughness:0.6}));
+  mBody.position.y = 0.7;
+  const mHead = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.55, 0.85), new THREE.MeshStandardMaterial({color:0x7d2929}));
+  mHead.position.set(0, 0.85, 1.15);
+  mimicMesh.add(mBody, mHead);
+  mimicMesh.position.set(42, 0, -45);
+  scene.add(mimicMesh);
+  return true;
+}
+
+function buildChunk(cx, cz) {
+  const grp = new THREE.Group(), q = QUALS[qIdx];
+  const geo = new THREE.PlaneGeometry(CHUNK, CHUNK, q.segs, q.segs); geo.rotateX(-Math.PI/2);
+  const pos = geo.attributes.position, cols = new Float32Array(pos.count*3);
+  const wx0 = cx*CHUNK, wz0 = cz*CHUNK;
+
+  for (let i=0; i<pos.count; i++) {
+    const wx = pos.getX(i)+wx0, wz = pos.getZ(i)+wz0, h = getHeight(wx, wz);
+    pos.setY(i, h);
+    if (h < 0.08) { cols[i*3]=0.22; cols[i*3+1]=0.24; cols[i*3+2]=0.21; } // River gravel/mud bank
+    else if (h < 1.8) { cols[i*3]=0.24; cols[i*3+1]=0.33; cols[i*3+2]=0.20; } // Open grass/moss plain
+    else { cols[i*3]=0.20; cols[i*3+1]=0.28; cols[i*3+2]=0.18; } // Highland
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, gMat); mesh.position.set(wx0, 0, wz0); grp.add(mesh);
+
+  const tM=[], rM=[], fM=[], bM=[], dummy=new THREE.Object3D();
+  const cColl=[], cNode=[];
+
+  // Place trees based on Forest Mask (sparse lone trees on plains, dense woods in forest zones)
+  const treeTries = Math.floor(24 * q.dens);
+  for (let i=0; i<treeTries; i++) {
+    const rx = wx0 + (hash(cx*31+i, cz*17)-0.5)*CHUNK;
+    const rz = wz0 + (hash(cx*13, cz*43+i)-0.5)*CHUNK;
+    const ry = getHeight(rx, rz);
+    if (ry <= 0.15) continue;
+    const mask = getForestMask(rx, rz);
+    // On open plains (mask < 0.62), only 8% chance for a lone tree; in forest (> 0.62), 85% chance
+    const chance = mask > 0.62 ? 0.85 : 0.08;
+    if (hash(rx*1.7, rz*2.3) > chance) continue;
+
+    const sc = 0.8 + hash(rx, rz)*0.7;
+    dummy.position.set(rx, ry-0.2, rz); dummy.rotation.set(0, hash(rx,i)*6.28, 0); dummy.scale.set(sc,sc,sc); dummy.updateMatrix();
+    tM.push(dummy.matrix.clone());
+    cColl.push({x:rx, z:rz, r:0.75*sc});
+    cNode.push({x:rx, z:rz, type:'tree'});
+  }
+
+  // Riverbank boulders & reeds
+  for (let i=0; i<Math.floor(14*q.dens); i++) {
+    const rx = wx0 + (hash(cx*53+i, cz*19)-0.5)*CHUNK;
+    const rz = wz0 + (hash(cx*29, cz*61+i)-0.5)*CHUNK;
+    const ry = getHeight(rx, rz);
+    if (ry > -0.35 && ry < 0.45) {
+      const sc = 0.6 + hash(rx,i)*0.9;
+      dummy.position.set(rx, ry, rz); dummy.rotation.set(0, hash(rz,i)*3.14, 0); dummy.scale.set(sc,sc,sc); dummy.updateMatrix();
+      rM.push(dummy.matrix.clone());
+      cNode.push({x:rx, z:rz, type:'reed'});
+    }
+    if (ry > -0.15 && ry < 0.35 && i % 2 === 0) {
+      const sc = 0.7 + hash(rz,rx)*1.2;
+      dummy.position.set(rx, ry-0.1, rz); dummy.rotation.set(hash(rx,rz), hash(rz,rx), 0); dummy.scale.set(sc*1.3,sc*0.7,sc); dummy.updateMatrix();
+      bM.push(dummy.matrix.clone());
+      cColl.push({x:rx, z:rz, r:0.9*sc});
+    }
+  }
+
+  // Low grass/fern tufts across open plains
+  for (let i=0; i<Math.floor(32*q.dens); i++) {
+    const rx = wx0 + (hash(cx*71+i, cz*23)-0.5)*CHUNK;
+    const rz = wz0 + (hash(cx*37, cz*79+i)-0.5)*CHUNK;
+    const ry = getHeight(rx, rz);
+    if (ry > 0.12) {
+      const sc = 0.5 + hash(i,rz)*0.7;
+      dummy.position.set(rx, ry, rz); dummy.rotation.set(0, hash(rx,rz)*6.28, 0); dummy.scale.set(sc,sc*0.7,sc); dummy.updateMatrix();
+      fM.push(dummy.matrix.clone());
+      if (i % 3 === 0) cNode.push({x:rx, z:rz, type:'fern'});
+    }
+  }
+
+  if (tM.length) {
+    const ti = new THREE.InstancedMesh(tGeo, tMat, tM.length), ci = new THREE.InstancedMesh(cGeo, cMat, tM.length);
+    tM.forEach((m,i)=>{ti.setMatrixAt(i,m); ci.setMatrixAt(i,m);}); grp.add(ti, ci);
+  }
+  if (rM.length) { const ri = new THREE.InstancedMesh(rGeo, rMat, rM.length); rM.forEach((m,i)=>ri.setMatrixAt(i,m)); grp.add(ri); }
+  if (fM.length) { const fi = new THREE.InstancedMesh(fGeo, fMat, fM.length); fM.forEach((m,i)=>fi.setMatrixAt(i,m)); grp.add(fi); }
+  if (bM.length) { const bi = new THREE.InstancedMesh(bGeo, bMat, bM.length); bM.forEach((m,i)=>bi.setMatrixAt(i,m)); grp.add(bi); }
+
+  scene.add(grp);
+  chunks.set(cx+','+cz, {grp, cColl, cNode});
+}
+
+function clearChunks() {
+  for (const [k, v] of chunks) { v.grp.traverse(o=>{if(o.geometry)o.geometry.dispose();}); scene.remove(v.grp); }
+  chunks.clear();
+}
+
+function updateChunks(px, pz) {
+  const pcx = Math.round(px/CHUNK), pcz = Math.round(pz/CHUNK), need = new Set();
+  for (let dx=-renderDist; dx<=renderDist; dx++) for (let dz=-renderDist; dz<=renderDist; dz++) {
+    if (dx*dx+dz*dz <= renderDist*renderDist) {
+      const k = (pcx+dx)+','+(pcz+dz); need.add(k);
+      if (!chunks.has(k)) buildChunk(pcx+dx, pcz+dz);
+    }
+  }
+  for (const [k, v] of chunks) if (!need.has(k)) {
+    v.grp.traverse(o=>{if(o.geometry)o.geometry.dispose();}); scene.remove(v.grp); chunks.delete(k);
+  }
+}
+
+// 5. ARK CRAFTING & SOLID COLLISION
+const inv = {wood:0, thatch:0, fiber:0};
+let tool = 'HANDS', swingT = 0;
+
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(t._id); t._id = setTimeout(()=>t.style.opacity=0, 1100);
+}
+
+function doSwing() {
+  initAudio(); swingT = 1.0;
+  // Hit Mimic if close
+  if (mimicMesh && Math.hypot(mimicMesh.position.x - plr.x, mimicMesh.position.z - plr.z) < 3.6) {
+    playChop(true);
+    const dmg = tool === 'SPEAR' ? 35 : tool === 'HATCHET' ? 20 : 8;
+    mimic.hp -= dmg;
+    mimic.stun = 2.2;
+    toast('Hit Predator! -' + dmg);
+    if (mimic.hp <= 0) {
+      mimic.hp = 100;
+      const ang = Math.random()*6.28;
+      mimicMesh.position.set(plr.x + Math.cos(ang)*75, 0, plr.z + Math.sin(ang)*75);
+      toast('Predator Fled into the Mist!');
+    }
+    return;
+  }
+
+  // Find closest harvest node in nearby chunks
+  const pcx = Math.round(plr.x/CHUNK), pcz = Math.round(plr.z/CHUNK);
+  let best = null, bestD = 3.8;
+  for (let dx=-1;dx<=1;dx++) for (let dz=-1;dz<=1;dz++) {
+    const ch = chunks.get((pcx+dx)+','+(pcz+dz));
+    if (!ch) continue;
+    for (const n of ch.cNode) {
+      const d = Math.hypot(n.x - plr.x, n.z - plr.z);
+      if (d < bestD) { bestD = d; best = n; }
+    }
+  }
+  if (!best) return;
+  playChop(best.type === 'tree');
+  const m = tool === 'HATCHET' ? 3 : 1;
+  if (best.type === 'tree') { inv.wood += m; inv.thatch += 2*m; toast('+'+m+' Wood, +'+(2*m)+' Thatch'); }
+  else if (best.type === 'reed') { inv.thatch += 2*m; inv.fiber += m; toast('+'+(2*m)+' Thatch, +'+m+' Fiber'); }
+  else { inv.fiber += 2*m; toast('+'+(2*m)+' Fiber'); }
+}
+
+const RECIPES = [
+  {name:'Stone Hatchet', desc:'3x Wood & Thatch harvest', cost:{wood:4,thatch:4,fiber:3}, fn:()=>{tool='HATCHET';document.getElementById('t-disp').textContent='HATCHET';handMesh.material.color.setHex(0x88999e);toast('Equipped Hatchet');}},
+  {name:'Primitive Spear', desc:'High damage vs Predator', cost:{wood:6,fiber:5}, fn:()=>{tool='SPEAR';document.getElementById('t-disp').textContent='SPEAR';handMesh.material.color.setHex(0xb8c4c2);toast('Equipped Spear');}},
+  {name:'Campfire', desc:'Light & warmth', cost:{wood:6,thatch:6}, fn:()=>{placeObj('fire');toast('Placed Campfire');}},
+  {name:'Bark Wall', desc:'Solid shelter wall', cost:{wood:8,thatch:5,fiber:4}, fn:()=>{placeObj('wall');toast('Built Solid Wall');}}
+];
+
+function placeObj(type, d=null, net=false) {
+  const px = d ? d.x : plr.x - Math.sin(plr.yaw)*3.2;
+  const pz = d ? d.z : plr.z - Math.cos(plr.yaw)*3.2;
+  const ry = d ? d.ry : plr.yaw;
+  const py = getHeight(px, pz);
+  if (type === 'fire') {
+    const g = new THREE.Group();
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(0.35,0.8,6), new THREE.MeshBasicMaterial({color:0xff7b29}));
+    fl.position.y = 0.45;
+    const lt = new THREE.PointLight(0xff7b29, 2.2, 20); lt.position.y = 0.8;
+    g.add(fl, lt); g.position.set(px, py+0.1, pz); scene.add(g);
+  } else {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(3.4,2.6,0.4), tMat);
+    w.position.set(px, py+1.2, pz); w.rotation.y = ry; scene.add(w);
+    walls.push({x:px, z:pz, r:1.6});
+  }
+  if (!net && conns.size > 0) bcast({type:'build', st:type, x:px, z:pz, ry});
+}
+
+function openCraft() {
+  document.getElementById('inv-b').textContent = 'Wood: '+inv.wood+' | Thatch: '+inv.thatch+' | Fiber: '+inv.fiber;
+  const l = document.getElementById('rec-l'); l.innerHTML = '';
+  RECIPES.forEach(r => {
+    const ok = Object.entries(r.cost).every(([k,v])=>inv[k]>=v);
+    const ct = Object.entries(r.cost).map(([k,v])=>v+' '+k).join(', ');
+    const div = document.createElement('div'); div.className = 'rec';
+    div.innerHTML = '<div><b>'+r.name+'</b><span>'+r.desc+' ('+ct+')</span></div>';
+    const b = document.createElement('button'); b.className = 'cgo'; b.textContent = 'CRAFT'; b.disabled = !ok;
+    b.onclick = () => { Object.entries(r.cost).forEach(([k,v])=>inv[k]-=v); r.fn(); openCraft(); };
+    div.appendChild(b); l.appendChild(div);
+  });
+  document.getElementById('craft-m').style.display = 'flex';
+}
+
+// 6. MULTIPLAYER WITH STUN NAT FIX
+let peer = null, isHost = false, rCode = '';
+const conns = new Map(), remPlrs = new Map();
+const PEER_CFG = { config: { iceServers: [{urls:'stun:stun.l.google.com:19302'}, {urls:'stun:stun1.l.google.com:19302'}] } };
+
+function makeAvatar() {
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,1.7,8), new THREE.MeshStandardMaterial({color:0xd98a3c})); b.position.y=0.85;
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.28,8,8), new THREE.MeshStandardMaterial({color:0xf2c6a0})); h.position.y=1.85;
+  g.add(b, h); scene.add(g); return g;
+}
+function bcast(data, ex=null) { for (const [id, c] of conns) if (id!==ex && c.open) c.send(data); }
+function onNet(id, d) {
+  if (d.type === 'init') { SEED = d.seed; clearChunks(); startGame(); }
+  else if (d.type === 'move') {
+    if (!remPlrs.has(id)) remPlrs.set(id, makeAvatar());
+    const a = remPlrs.get(id); a.position.set(d.x, d.y, d.z); a.rotation.y = d.ry;
+    if (isHost) bcast({...d, id}, id);
+  } else if (d.type === 'build') { placeObj(d.st, d, true); if (isHost) bcast(d, id); }
+}
+
+document.getElementById('b-host').onclick = () => {
+  initAudio();
+  const s = document.getElementById('seed-i').value.trim();
+  SEED = s ? (isNaN(s) ? [...s].reduce((a,c)=>a+c.charCodeAt(0),0)*97 : parseInt(s,10)) : Math.floor(100000+Math.random()*900000);
+  rCode = Math.random().toString(36).substring(2,6).toUpperCase();
+  isHost = true; startGame();
+  if (typeof Peer !== 'undefined') {
+    try {
+      peer = new Peer('CARB-V3-' + rCode, PEER_CFG);
+      peer.on('open', () => document.getElementById('r-disp').textContent = 'ROOM: ' + rCode);
+      peer.on('connection', c => {
+        conns.set(c.peer, c);
+        c.on('open', () => c.send({type:'init', seed:SEED}));
+        c.on('data', d => onNet(c.peer, d));
+      });
+    } catch(e){}
+  }
+};
+
+document.getElementById('b-join').onclick = () => {
+  initAudio();
+  const c = document.getElementById('j-code').value.trim().toUpperCase();
+  const st = document.getElementById('status');
+  if (c.length < 4) { st.textContent = 'Enter 4-letter Room Code!'; return; }
+  rCode = c; isHost = false; st.textContent = 'Connecting to ' + rCode + '...';
+  if (typeof Peer === 'undefined') { st.textContent = 'Multiplayer offline.'; return; }
+  peer = new Peer(PEER_CFG);
+  let connected = false;
+  setTimeout(() => { if (!connected) st.textContent = 'Room not found or blocked by mobile network.'; }, 6500);
+  peer.on('open', () => {
+    const conn = peer.connect('CARB-V3-' + rCode, {reliable:true});
+    conns.set('host', conn);
+    conn.on('open', () => { connected = true; st.textContent = 'Joined!'; });
+    conn.on('data', d => { connected = true; onNet(d.id || 'host', d); });
+  });
+};
+
+// 7. CONTROLS, COLLISION & MINIMAP
+const plr = {x:22, y:5, z:0, vy:0, yaw:0, pitch:0, hp:100, stam:100, crouch:false, ground:false};
+const mimic = {hp:100, stun:0, soundTimer:0, angle:0};
+const keys = {}, joy = {on:false, dx:0, dy:0, id:null};
+let lookId = null, lx = 0, ly = 0, running = false, stepDist = 0, netT = 0;
+
+const jz = document.getElementById('joy-z'), js = document.getElementById('joy-s');
+jz.addEventListener('touchstart', e => { e.preventDefault(); initAudio(); const t = e.changedTouches[0]; joy.on=true; joy.id=t.identifier; moveJoy(t); }, {passive:false});
+jz.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier===joy.id) moveJoy(t); }, {passive:false});
+const stopJoy = e => { for (const t of e.changedTouches) if (t.identifier===joy.id) { joy.on=false; joy.dx=0; joy.dy=0; js.style.transform='translate(0,0)'; } };
+jz.addEventListener('touchend', stopJoy); jz.addEventListener('touchcancel', stopJoy);
+function moveJoy(t) {
+  const r = jz.getBoundingClientRect(), cx = r.left+r.width/2, cy = r.top+r.height/2;
+  let dx = t.clientX-cx, dy = t.clientY-cy, d = Math.hypot(dx,dy);
+  if (d > 38) { dx = dx/d*38; dy = dy/d*38; }
+  js.style.transform = 'translate('+dx+'px,'+dy+'px)';
+  joy.dx = dx/38; joy.dy = dy/38;
+}
+
+const lz = document.getElementById('look-z');
+lz.addEventListener('touchstart', e => { initAudio(); const t = e.changedTouches[0]; lookId=t.identifier; lx=t.clientX; ly=t.clientY; });
+lz.addEventListener('touchmove', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) if (t.identifier===lookId) {
+    plr.yaw -= (t.clientX-lx)*0.0065;
+    plr.pitch = Math.max(-1.4, Math.min(1.4, plr.pitch - (t.clientY-ly)*0.0065));
+    lx = t.clientX; ly = t.clientY;
+  }
+}, {passive:false});
+
+document.getElementById('b-swing').ontouchstart = e => { e.preventDefault(); doSwing(); };
+document.getElementById('b-swing').onclick = doSwing;
+document.getElementById('b-jump').ontouchstart = e => { e.preventDefault(); if (plr.ground) { plr.vy=7.2; plr.ground=false; } };
+document.getElementById('b-crouch').ontouchstart = e => { e.preventDefault(); plr.crouch = !plr.crouch; };
+document.getElementById('b-craft').onclick = openCraft;
+document.getElementById('b-ccraft').onclick = () => document.getElementById('craft-m').style.display='none';
+document.getElementById('b-menu').onclick = () => { document.getElementById('menu').style.display='flex'; document.getElementById('hud').style.display='none'; };
+
+window.onkeydown = e => {
+  keys[e.code] = true;
+  if (e.code === 'KeyC') plr.crouch = !plr.crouch;
+  if (e.code === 'KeyE') { const m = document.getElementById('craft-m'); m.style.display = m.style.display==='flex'?'none':'flex'; if(m.style.display==='flex') openCraft(); }
+};
+window.onkeyup = e => keys[e.code] = false;
+document.onmousemove = e => {
+  if (document.pointerLockElement === renderer?.domElement) {
+    plr.yaw -= e.movementX*0.0022;
+    plr.pitch = Math.max(-1.45, Math.min(1.45, plr.pitch - e.movementY*0.0022));
+  }
+};
+document.onmousedown = e => {
+  if (running && e.target === renderer?.domElement) {
+    initAudio();
+    if (!document.pointerLockElement && renderer.domElement.requestPointerLock) try{renderer.domElement.requestPointerLock();}catch(err){}
+    doSwing();
+  }
+};
+
+function resolveCollisions() {
+  const pcx = Math.round(plr.x/CHUNK), pcz = Math.round(plr.z/CHUNK);
+  const pRad = 0.45;
+  for (let dx=-1;dx<=1;dx++) for (let dz=-1;dz<=1;dz++) {
+    const ch = chunks.get((pcx+dx)+','+(pcz+dz));
+    if (!ch) continue;
+    for (const c of ch.cColl) {
+      const vx = plr.x - c.x, vz = plr.z - c.z, d = Math.hypot(vx, vz), minD = pRad + c.r;
+      if (d < minD && d > 0.001) {
+        plr.x += (vx/d)*(minD - d);
+        plr.z += (vz/d)*(minD - d);
+      }
+    }
+  }
+  for (const w of walls) {
+    const vx = plr.x - w.x, vz = plr.z - w.z, d = Math.hypot(vx, vz), minD = pRad + w.r;
+    if (d < minD && d > 0.001) { plr.x += (vx/d)*(minD - d); plr.z += (vz/d)*(minD - d); }
+  }
+}
+
+const mapCtx = document.getElementById('minimap').getContext('2d');
+function drawMinimap() {
+  if (!showMap) return;
+  mapCtx.clearRect(0, 0, 96, 96);
+  const scale = 0.65;
+  // Draw river & biome terrain around player
+  for (let gx = -48; gx < 48; gx += 4) {
+    for (let gz = -48; gz < 48; gz += 4) {
+      if (gx*gx + gz*gz > 46*46) continue;
+      // Rotate map relative to player yaw
+      const rx = gx * Math.cos(plr.yaw) - gz * Math.sin(plr.yaw);
+      const rz = gx * Math.sin(plr.yaw) + gz * Math.cos(plr.yaw);
+      const wx = plr.x + rx / scale, wz = plr.z + rz / scale;
+      const h = getHeight(wx, wz);
+      const fm = getForestMask(wx, wz);
+      mapCtx.fillStyle = h < 0 ? '#2b5466' : (fm > 0.62 ? '#234227' : '#4a6b44');
+      mapCtx.fillRect(48 + gx, 48 + gz, 4, 4);
+    }
+  }
+  // Player arrow in center
+  mapCtx.fillStyle = '#ffffff';
+  mapCtx.beginPath(); mapCtx.arc(48, 48, 3, 0, 6.28); mapCtx.fill();
+  mapCtx.beginPath(); mapCtx.moveTo(48, 41); mapCtx.lineTo(45, 47); mapCtx.lineTo(51, 47); mapCtx.fill();
+}
+
+function startGame() {
+  if (!scene && !init3D()) return;
+  plr.x = 24; plr.z = 0; plr.y = getHeight(24, 0) + 2; plr.hp = 100;
+  document.getElementById('r-disp').textContent = 'ROOM: ' + (rCode || 'SOLO');
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  if (!running) { running = true; requestAnimationFrame(loop); }
+}
+
+let lastT = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - lastT)/1000, 0.05); lastT = now;
+
+  let mx = joy.dx, mz = joy.dy;
+  if (keys['KeyW']) mz -= 1; if (keys['KeyS']) mz += 1;
+  if (keys['KeyA']) mx -= 1; if (keys['KeyD']) mx += 1;
+  const mag = Math.min(1, Math.hypot(mx, mz));
+  const sprint = (keys['ShiftLeft'] || mag > 0.88) && plr.stam > 5 && !plr.crouch;
+  const spd = plr.crouch ? 2.5 : sprint ? 8.6 : 4.8;
+
+  if (mag > 0.05) {
+    const s = Math.sin(plr.yaw), c = Math.cos(plr.yaw);
+    const dx = (mx*c + mz*s)*spd*dt, dz = (mz*c - mx*s)*spd*dt;
+    plr.x += dx; plr.z += dz;
+    stepDist += Math.hypot(dx, dz);
+    if (stepDist > (sprint ? 2.6 : 2.1)) {
+      stepDist = 0;
+      playStep(getHeight(plr.x, plr.z) < 0.05, sprint);
+    }
+  }
+
+  resolveCollisions();
+
+  if (sprint && mag > 0.1) plr.stam = Math.max(0, plr.stam - 20*dt);
+  else plr.stam = Math.min(100, plr.stam + 14*dt);
+
+  const gy = getHeight(plr.x, plr.z), eye = plr.crouch ? 1.0 : 1.75;
+  if (keys['Space'] && plr.ground) { plr.vy = 7.2; plr.ground = false; }
+  plr.vy -= 18*dt; plr.y += plr.vy*dt;
+  if (plr.y <= gy + eye) { plr.y = gy + eye; plr.vy = 0; plr.ground = true; }
+
+  camera.position.set(plr.x, plr.y, plr.z);
+  camera.rotation.order = 'YXZ'; camera.rotation.y = plr.yaw; camera.rotation.x = plr.pitch;
+
+  if (swingT > 0) { swingT = Math.max(0, swingT - dt*4.5); handMesh.rotation.x = -Math.sin(swingT*Math.PI)*1.1; }
+  water.position.set(plr.x, 0, plr.z);
+  updateChunks(plr.x, plr.z);
+  drawMinimap();
+
+  // Sound level & Slower Blind SCP-939 Mimic AI
+  const noiseLvl = mag < 0.05 ? 5 : plr.crouch ? 14 : sprint ? 95 : 46;
+  document.getElementById('st-f').style.width = plr.stam + '%';
+  document.getElementById('st-t').textContent = Math.round(plr.stam) + '%';
+  document.getElementById('ns-f').style.width = noiseLvl + '%';
+  document.getElementById('ns-t').textContent = noiseLvl > 70 ? 'LOUD' : noiseLvl > 30 ? 'MED' : 'SILENT';
+
+  if (mimicMesh) {
+    const mdx = plr.x - mimicMesh.position.x, mdz = plr.z - mimicMesh.position.z;
+    const mDist = Math.hypot(mdx, mdz);
+    const hearRange = noiseLvl * 0.55; // Silent crouch = 7.7m, Walk = 25m, Sprint = 52m
+    mimic.soundTimer += dt;
+
+    if (mimic.stun > 0) {
+      mimic.stun -= dt;
+    } else if (mDist < hearRange) {
+      // Stalks player toward sound (slower than walk speed)
+      const mSpd = 3.6;
+      mimicMesh.position.x += (mdx / mDist) * mSpd * dt;
+      mimicMesh.position.z += (mdz / mDist) * mSpd * dt;
+      mimicMesh.rotation.y = Math.atan2(mdx, mdz);
+      if (mimic.soundTimer > 2.2) { mimic.soundTimer = 0; playMimicSound(mDist, 'stalk'); }
+      if (mDist < 1.9) {
+        plr.hp = Math.max(0, plr.hp - 22*dt);
+        document.getElementById('hp-f').style.width = plr.hp + '%';
+        document.getElementById('hp-t').textContent = Math.round(plr.hp);
+        if (plr.hp <= 0) { plr.hp = 100; plr.x = 24; plr.z = 0; toast('You died! Respawned by river.'); }
+      }
+    } else {
+      // Patrol & emit deceptive wood-chop/footstep lures
+      mimic.angle += dt * 0.35;
+      mimicMesh.position.x += Math.cos(mimic.angle) * 2.0 * dt;
+      mimicMesh.position.z += Math.sin(mimic.angle) * 2.0 * dt;
+      mimicMesh.rotation.y = Math.atan2(Math.cos(mimic.angle), Math.sin(mimic.angle));
+      if (mimic.soundTimer > 5.0) { mimic.soundTimer = 0; playMimicSound(mDist, 'lure'); }
+    }
+    mimicMesh.position.y = getHeight(mimicMesh.position.x, mimicMesh.position.z);
+  }
+
+  netT += dt;
+  if (netT >= 0.06 && conns.size > 0) {
+    netT = 0; bcast({type:'move', x:plr.x, y:plr.y-eye, z:plr.z, ry:plr.yaw});
+  }
+  renderer.render(scene, camera);
+}
+
+window.onresize = () => {
+  if (!camera || !renderer) return;
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+};
+</script>
+</body>
+</html>
